@@ -65,6 +65,14 @@ export default function AgreementDetail() {
 
   const isBuyer = user?.id === agreement.buyer;
   const isSeller = user?.id === agreement.seller;
+  const handleLockAndFund = () => {
+    lockMutation.mutate(undefined, {
+      onSuccess: (data) => {
+        const amount = data?.amount ?? agreement.amount;
+        navigate(`/fund?agreementId=${agreement.id}&amount=${encodeURIComponent(amount)}`);
+      },
+    });
+  };
 
   return (
     <div style={{
@@ -203,7 +211,7 @@ export default function AgreementDetail() {
                       Fund this escrow. Money will be held securely in your Nomba vault.
                     </p>
                   </div>
-                  <Button onClick={() => lockMutation.mutateAsync()} loading={lockMutation.isPending} className="w-full">
+                  <Button onClick={handleLockAndFund} loading={lockMutation.isPending} className="w-full">
                     <CreditCard style={{ width: 15, height: 15 }} weight="bold" /> Lock &amp; Fund Escrow
                   </Button>
                 </div>
@@ -235,8 +243,8 @@ export default function AgreementDetail() {
                       Payment instructions generated. Please transfer funds to activate the escrow.
                     </p>
                   </div>
-                  <Button onClick={() => navigate(`/fund?agreementId=${agreement.id}&amount=${agreement.amount}`)} className="w-full">
-                    <CreditCard style={{ width: 15, height: 15 }} weight="bold" /> View Payment Instructions
+                  <Button onClick={() => navigate(`/fund?agreementId=${agreement.id}&amount=${encodeURIComponent(agreement.amount)}`)} className="w-full">
+                    <CreditCard style={{ width: 15, height: 15 }} weight="bold" /> Continue Funding
                   </Button>
                 </div>
               )}

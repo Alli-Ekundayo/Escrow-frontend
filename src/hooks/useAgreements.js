@@ -36,7 +36,7 @@ export const useLockFunds = (id) => {
   return useMutation({
     mutationFn: () => escrowApi.lockFunds(id).then((r) => r.data),
     onSuccess: () => {
-      addToast('Funds locked.', 'success');
+      addToast('Funding initialized. Complete the transfer to activate escrow.', 'success');
       qc.invalidateQueries({ queryKey: ['agreement', id] });
       qc.invalidateQueries({ queryKey: ['agreements'] });
     },
