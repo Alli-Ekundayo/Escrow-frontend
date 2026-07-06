@@ -1,9 +1,23 @@
 import axios from 'axios';
 
+const getBaseURL = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  const isLocal = typeof window !== 'undefined' && 
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  return isLocal 
+    ? 'http://localhost:8000/api'
+    : 'https://escrow-backend-production-7b3d.up.railway.app/api';
+};
+
+const API_URL = getBaseURL();
+
 const client = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+  baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
 });
+
 
 // Attach JWT on every request
 client.interceptors.request.use((config) => {
@@ -54,7 +68,7 @@ client.interceptors.response.use(
         const stored = localStorage.getItem('auth-storage');
         const { state } = JSON.parse(stored);
         const { data } = await axios.post(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/auth/token/refresh/`,
+          `${API_URL}/auth/token/refresh/`,
           { refresh: state.refreshToken }
         );
         const newAccess = data.access;
