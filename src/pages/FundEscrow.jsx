@@ -9,6 +9,7 @@ import { ArrowLeft, CreditCard, Bank, CheckCircle } from '@phosphor-icons/react'
 import { getAgreement } from '../api/escrow';
 import { simulateIncomingTransfer } from '../api/payments';
 import { formatCurrency } from '../utils/format';
+import { debugWallet } from '../api/auth';
 
 const FUNDED_STATUSES = new Set(['active', 'pending_proof', 'completed', 'disputed']);
 const normalizeStatus = (status) => String(status ?? '').toLowerCase();
@@ -32,6 +33,30 @@ export default function FundEscrow() {
   const [initialBalance, setInitialBalance] = useState(null);
   const parsedDepositAmount = Number(depositAmount);
   const hasValidDepositAmount = Number.isFinite(parsedDepositAmount) && parsedDepositAmount > 0;
+
+  const [provisioningError, setProvisioningError] = useState(null);
+  const [retryingProvision, setRetryingProvision] = useState(false);
+
+  const handleRetryProvisioning = async () => {
+    setRetryingProvision(true);
+    setProvisioningError(null);
+    try {
+      const response = await debugWallet();
+      if (response.data?.status === 'success') {
+        addToast('Virtual account provisioned successfully!', 'success');
+        fetchProfile();
+      } else {
+        setProvisioningError(response.data?.error_message || 'Provisioning failed');
+        addToast('Provisioning failed. See details below.', 'error');
+      }
+    } catch (err) {
+      const errMsg = err.response?.data?.error_message || err.response?.data?.detail || err.message;
+      setProvisioningError(errMsg);
+      addToast('Provisioning failed. See details below.', 'error');
+    } finally {
+      setRetryingProvision(false);
+    }
+  };
 
   useEffect(() => {
     fetchProfile().catch(() => {});
@@ -279,6 +304,39 @@ export default function FundEscrow() {
               </div>
             ))}
           </div>
+          {(!user?.nomba_account_number) && (
+            <div style={{
+              marginTop: 14, padding: 12, borderRadius: 8,
+              backgroundColor: 'rgba(235, 94, 40, 0.05)',
+              border: '1px solid rgba(235, 94, 40, 0.15)',
+              display: 'flex', flexDirection: 'column', gap: 8
+            }}>
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                Virtual wallet provisioning takes a moment. If it is stuck at 'Provisioning...', you can manually retry.
+              </span>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={handleRetryProvisioning} 
+                loading={retryingProvision}
+                style={{ width: 'fit-content' }}
+              >
+                Retry Provisioning
+              </Button>
+              {provisioningError && (
+                <pre style={{
+                  margin: 0, padding: 8, borderRadius: 4,
+                  backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                  border: '1px solid rgba(239, 68, 68, 0.15)',
+                  color: '#dc2626', fontSize: 11,
+                  whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+                  fontFamily: "'Geist Mono', monospace"
+                }}>
+                  {provisioningError}
+                </pre>
+              )}
+            </div>
+          )}
           {agreementError && (
             <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: 'var(--color-accent-red-text)', margin: '10px 0 0' }}>
               {agreementError}
