@@ -182,9 +182,14 @@ export default function Dashboard() {
                 </p>
               </div>
               {user?.nomba_account_number && (
-                <Button size="xs" onClick={() => setIsWithdrawOpen(true)} style={{ padding: '4px 10px', fontSize: 11 }}>
-                  Withdraw
-                </Button>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <Button size="xs" variant="outline" onClick={() => navigate('/fund')} style={{ padding: '4px 10px', fontSize: 11 }}>
+                    Fund
+                  </Button>
+                  <Button size="xs" onClick={() => setIsWithdrawOpen(true)} style={{ padding: '4px 10px', fontSize: 11 }}>
+                    Withdraw
+                  </Button>
+                </div>
               )}
             </div>
           </Card>
