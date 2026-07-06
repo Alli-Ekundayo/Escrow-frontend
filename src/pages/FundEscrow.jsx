@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -11,13 +11,17 @@ import axios from 'axios';
 export default function FundEscrow() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user } = useAuthStore();
+  const { user, fetchProfile } = useAuthStore();
   const addToast = useUIStore((s) => s.addToast);
   const amountParam = searchParams.get('amount') || '5000';
   const agreementId = searchParams.get('agreementId') || '';
   const [depositAmount, setDepositAmount] = useState(amountParam);
   const [simulating, setSimulating] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    fetchProfile().catch(() => {});
+  }, [fetchProfile]);
 
   const handleSimulate = async () => {
     setSimulating(true);
@@ -126,51 +130,53 @@ export default function FundEscrow() {
         </Card>
 
         {/* Sandbox simulator */}
-        <Card style={{ border: '1.5px solid #FBF3DB', backgroundColor: 'rgba(251,243,219,0.3)' }}>
-          <CardHeader>
-            <CardTitle style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-accent-yellow-text)' }}>
-              <div style={{
-                width: 30, height: 30, borderRadius: 8,
-                backgroundColor: '#FBF3DB',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <CreditCard style={{ width: 15, height: 15, color: 'var(--color-accent-yellow-text)' }} weight="fill" />
-              </div>
-              Sandbox Simulator
-            </CardTitle>
-          </CardHeader>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-              Mock an incoming bank transfer for testing.
-            </p>
-            <Input
-              label="Amount (NGN)"
-              type="number"
-              value={depositAmount}
-              onChange={(e) => setDepositAmount(e.target.value)}
-            />
-            {success ? (
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                backgroundColor: '#e2f6d5',
-                border: '1.5px solid var(--border-default)',
-                borderRadius: 10, padding: 14,
-              }}>
-                <CheckCircle style={{ width: 18, height: 18, color: '#1a5c2a', flexShrink: 0 }} weight="fill" />
-                <span style={{
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 14, fontWeight: 600, color: '#1a5c2a',
+        {!import.meta.env.PROD && user?.nomba_test_mode !== false && (
+          <Card style={{ border: '1.5px solid #FBF3DB', backgroundColor: 'rgba(251,243,219,0.3)' }}>
+            <CardHeader>
+              <CardTitle style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-accent-yellow-text)' }}>
+                <div style={{
+                  width: 30, height: 30, borderRadius: 8,
+                  backgroundColor: '#FBF3DB',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  Deposit simulated. Redirecting…
-                </span>
-              </div>
-            ) : (
-              <Button onClick={handleSimulate} loading={simulating} variant="copper" className="w-full">
-                Simulate Deposit
-              </Button>
-            )}
-          </div>
-        </Card>
+                  <CreditCard style={{ width: 15, height: 15, color: 'var(--color-accent-yellow-text)' }} weight="fill" />
+                </div>
+                Sandbox Simulator
+              </CardTitle>
+            </CardHeader>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+                Mock an incoming bank transfer for testing.
+              </p>
+              <Input
+                label="Amount (NGN)"
+                type="number"
+                value={depositAmount}
+                onChange={(e) => setDepositAmount(e.target.value)}
+              />
+              {success ? (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  backgroundColor: '#e2f6d5',
+                  border: '1.5px solid var(--border-default)',
+                  borderRadius: 10, padding: 14,
+                }}>
+                  <CheckCircle style={{ width: 18, height: 18, color: '#1a5c2a', flexShrink: 0 }} weight="fill" />
+                  <span style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 14, fontWeight: 600, color: '#1a5c2a',
+                  }}>
+                    Deposit simulated. Redirecting…
+                  </span>
+                </div>
+              ) : (
+                <Button onClick={handleSimulate} loading={simulating} variant="copper" className="w-full">
+                  Simulate Deposit
+                </Button>
+              )}
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );
