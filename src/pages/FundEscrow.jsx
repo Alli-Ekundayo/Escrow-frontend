@@ -43,7 +43,15 @@ export default function FundEscrow() {
     try {
       const response = await debugWallet();
       if (response.data?.status === 'success') {
-        addToast('Virtual account provisioned successfully!', 'success');
+        const wallet = response.data?.wallet;
+        if (!wallet?.bankAccountNumber) {
+          setProvisioningError(
+            `Nomba API succeeded but returned NO 'bankAccountNumber'.\nKeys: ${Object.keys(wallet || {}).join(', ')}\nResponse: ${JSON.stringify(wallet, null, 2)}`
+          );
+          addToast('Warning: Account number missing from response.', 'warning');
+        } else {
+          addToast('Virtual account provisioned successfully!', 'success');
+        }
         fetchProfile();
       } else {
         setProvisioningError(response.data?.error_message || 'Provisioning failed');
