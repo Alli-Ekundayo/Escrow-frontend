@@ -68,7 +68,15 @@ export default function AgreementDetail() {
   const handleLockAndFund = () => {
     lockMutation.mutate(undefined, {
       onSuccess: (data) => {
-        const amount = data?.amount ?? agreement.amount;
+        // Backend may directly activate the agreement if the buyer already has
+        // sufficient wallet balance (lock_funds returns status=ACTIVE in that case).
+        // In that case, skip the /fund page and go straight back to the agreement.
+        const returnedStatus = (data?.status ?? data?.agreement?.status ?? '').toLowerCase();
+        if (returnedStatus === 'active') {
+          navigate(`/agreements/${agreement.id}`);
+          return;
+        }
+        const amount = data?.amount ?? data?.agreement?.amount ?? agreement.amount;
         navigate(`/fund?agreementId=${agreement.id}&amount=${encodeURIComponent(amount)}`);
       },
     });

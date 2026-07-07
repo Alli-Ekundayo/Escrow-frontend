@@ -167,12 +167,21 @@ export default function FundEscrow() {
     }
     setSimulating(true);
     try {
+      // Use the agreement's stored nomba_transaction_ref so the webhook handler
+      // can match by reference. Fall back to the old tf-{id} pattern if not loaded.
+      const txRef = agreement?.nomba_transaction_ref
+        || (agreementId ? `tf-${agreementId}` : `tf-manual-${Date.now()}`);
+
+      // The webhook handler divides the amount by 100 (treats incoming value as kobo).
+      // Send kobo here so the amount-matching against the agreement's NGN amount works correctly.
+      const amountInKobo = Math.round(parsedDepositAmount * 100);
+
       await simulateIncomingTransfer({
         event: 'collection.credit',
         data: {
           reference: `sim-ref-${Date.now()}`,
-          merchantTxRef: agreementId ? `tf-${agreementId}` : `tf-manual-${Date.now()}`,
-          amount: parsedDepositAmount,
+          merchantTxRef: txRef,
+          amount: amountInKobo,
           accountNumber: user?.nomba_account_number,
           bankCode: user?.nomba_bank_code || 'NMB',
         },

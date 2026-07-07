@@ -35,8 +35,13 @@ export const useLockFunds = (id) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => escrowApi.lockFunds(id).then((r) => r.data),
-    onSuccess: () => {
-      addToast('Funding initialized. Complete the transfer to activate escrow.', 'success');
+    onSuccess: (data) => {
+      const returnedStatus = (data?.status ?? data?.agreement?.status ?? '').toLowerCase();
+      if (returnedStatus === 'active') {
+        addToast('Escrow funded and activated from your wallet balance!', 'success');
+      } else {
+        addToast('Funding initialized. Complete the bank transfer to activate escrow.', 'success');
+      }
       qc.invalidateQueries({ queryKey: ['agreement', id] });
       qc.invalidateQueries({ queryKey: ['agreements'] });
     },
