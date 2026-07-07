@@ -1,16 +1,77 @@
-# React + Vite
+# TrustFlow — Escrow Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The React/Vite frontend for **TrustFlow**, an AI-powered escrow platform integrating Nomba payments for the Nigerian market.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🔐 Reviewer Access (Start Here)
 
-## React Compiler
+> **Skip signup entirely.** Use the accounts below to explore the full buyer → seller escrow flow.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 🌐 Live App
 
-## Expanding the Oxlint configuration
+**https://escrow-frontend-618z.vercel.app**
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+---
+
+### 👤 Demo Accounts
+
+#### Buyer (funds the escrow)
+| Field | Value |
+|---|---|
+| **Email** | `onepeice@gmail.com` |
+| **Password** | `TrustFlow2026!` |
+
+#### Seller (receives the payout)
+| Field | Value |
+|---|---|
+| **Email** | `ada@yahoo.com` |
+| **Password** | `TrustFlow2026!` |
+
+---
+
+### 🚦 Suggested Review Flow
+
+1. Visit **https://escrow-frontend-618z.vercel.app**
+2. Log in as **Buyer** (`onepeice@gmail.com` / `TrustFlow2026!`) → Create an escrow agreement (let AI draft the conditions).
+3. Fund the escrow.
+4. Log out → Log in as **Seller** (`ada@yahoo.com` / `TrustFlow2026!`) → Mark milestones complete.
+5. Switch back to Buyer → Release funds.
+6. Observe payout confirmation on the Seller dashboard.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Framework**: React 18 + Vite
+- **Styling**: Vanilla CSS
+- **State**: Zustand
+- **API**: Axios → `https://escrow-backend-production-7b3d.up.railway.app/api/v1`
+
+---
+
+## 🚀 Local Development
+
+```bash
+npm install
+npm run dev
+```
+
+To point at the production API locally, set in `.env`:
+
+```env
+VITE_API_URL=https://escrow-backend-production-7b3d.up.railway.app/api
+```
+
+---
+
+## 📂 Project Structure
+
+```
+src/
+├── components/       # Reusable UI components (MilestoneTracker, FundEscrow, etc.)
+├── pages/            # Route-level pages (AgreementDetail, Dashboard, etc.)
+├── hooks/            # Custom React hooks (useLockFunds, usePayment, etc.)
+├── store/            # Zustand state slices
+└── api/              # Axios instances and endpoint wrappers
+```
