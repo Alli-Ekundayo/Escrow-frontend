@@ -189,52 +189,118 @@ export default function FundEscrow() {
 
   const backPath = agreementId ? `/agreements/${agreementId}` : '/dashboard';
 
-  if (checkSuccess) {
-    return (
-      <div style={{
-        maxWidth: 500, margin: '80px auto',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        gap: 24, fontFamily: "'Inter', sans-serif", textAlign: 'center',
-        padding: '48px 32px', backgroundColor: 'var(--bg-surface)',
-        border: '1.5px solid var(--border-default)', borderRadius: 16,
-        boxShadow: 'var(--shadow-lg)',
-      }}>
-        <div style={{
-          width: 80, height: 80, borderRadius: '50%',
-          backgroundColor: '#e2f6d5',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <CheckCircle style={{ width: 44, height: 44, color: '#1a5c2a' }} weight="fill" />
-        </div>
-        <div>
-          <h1 style={{ fontSize: 24, fontWeight: 900, color: 'var(--text-primary)', margin: '0 0 8px', letterSpacing: '-0.02em' }}>
-            Payment Verified!
-          </h1>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
-            {agreementId 
-              ? 'Your transfer has been successfully processed and the escrow agreement is now funded and active.'
-              : 'Your transfer has been verified and your virtual wallet balance has been updated.'
-            }
-          </p>
-        </div>
-        <div style={{
-          fontSize: 12, color: 'var(--text-tertiary)',
-          backgroundColor: 'var(--bg-surface-alt)',
-          padding: '8px 16px', borderRadius: 8,
-          border: '1px solid var(--border-default)'
-        }}>
-          Redirecting you automatically...
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div style={{
-      maxWidth: 600, margin: '0 auto',
-      display: 'flex', flexDirection: 'column', gap: 24,
-      fontFamily: "'Inter', system-ui, sans-serif",
-    }}>
+    <>
+      {/* Payment Verified Modal Popup */}
+      {checkSuccess && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.55)',
+            backdropFilter: 'blur(6px)',
+            animation: 'fadeInOverlay 0.3s ease',
+            padding: '16px',
+          }}
+        >
+          <style>{`
+            @keyframes fadeInOverlay {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            @keyframes scaleInModal {
+              from { opacity: 0; transform: scale(0.85) translateY(20px); }
+              to { opacity: 1; transform: scale(1) translateY(0); }
+            }
+            @keyframes spinnerRing {
+              to { stroke-dashoffset: 0; }
+            }
+            @keyframes pulse-ring {
+              0% { transform: scale(1); opacity: 0.8; }
+              100% { transform: scale(1.5); opacity: 0; }
+            }
+          `}</style>
+          <div
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              border: '1.5px solid rgba(26, 92, 42, 0.25)',
+              borderRadius: 24,
+              boxShadow: '0 32px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05)',
+              padding: '48px 40px 40px',
+              maxWidth: 420,
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 20,
+              textAlign: 'center',
+              fontFamily: "'Inter', sans-serif",
+              animation: 'scaleInModal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            }}
+          >
+            {/* Animated success icon */}
+            <div style={{ position: 'relative', width: 96, height: 96 }}>
+              <div style={{
+                position: 'absolute', inset: 0, borderRadius: '50%',
+                backgroundColor: 'rgba(26, 92, 42, 0.12)',
+                animation: 'pulse-ring 1.5s ease-out infinite',
+              }} />
+              <div style={{
+                position: 'relative', zIndex: 1,
+                width: 96, height: 96, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 8px 24px rgba(26, 92, 42, 0.2)',
+              }}>
+                <CheckCircle style={{ width: 52, height: 52, color: '#1a5c2a' }} weight="fill" />
+              </div>
+            </div>
+
+            {/* Text */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <h2 style={{
+                fontSize: 26, fontWeight: 900, letterSpacing: '-0.03em',
+                color: 'var(--text-primary)', margin: 0,
+              }}>
+                Payment Verified!
+              </h2>
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+                {agreementId
+                  ? 'Your transfer has been processed and the escrow agreement is now funded and active.'
+                  : 'Your transfer has been verified and your wallet balance has been updated.'}
+              </p>
+            </div>
+
+            {/* Redirecting pill */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              backgroundColor: 'var(--bg-surface-alt)',
+              border: '1px solid var(--border-default)',
+              borderRadius: 999, padding: '8px 16px',
+              fontSize: 12, color: 'var(--text-tertiary)',
+            }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" style={{ animation: 'spin 1s linear infinite' }}>
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                <circle cx="6" cy="6" r="5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="16" strokeDashoffset="8" strokeLinecap="round" />
+              </svg>
+              Redirecting you automatically…
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main page content — always rendered beneath modal */}
+      <div
+        style={{
+          maxWidth: 600, margin: '0 auto',
+          display: 'flex', flexDirection: 'column', gap: 24,
+          fontFamily: "'Inter', system-ui, sans-serif",
+          filter: checkSuccess ? 'blur(2px)' : 'none',
+          transition: 'filter 0.3s ease',
+          pointerEvents: checkSuccess ? 'none' : 'auto',
+        }}
+      >
+        {/* ─────────────────── rest of main page below ─────────────────── */}
       {/* Back */}
       <button
         onClick={() => navigate(backPath)}
@@ -445,5 +511,6 @@ export default function FundEscrow() {
         )}
       </div>
     </div>
+    </>
   );
 }
