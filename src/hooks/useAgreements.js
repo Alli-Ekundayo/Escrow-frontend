@@ -70,6 +70,7 @@ export const useReleaseFunds = (id) => {
     onSuccess: () => {
       addToast('Funds released to seller.', 'success');
       qc.invalidateQueries({ queryKey: ['agreement', id] });
+      qc.invalidateQueries({ queryKey: ['agreements'] });
     },
     onError: (err) => addToast(err.response?.data?.detail || 'Release failed', 'error'),
   });
