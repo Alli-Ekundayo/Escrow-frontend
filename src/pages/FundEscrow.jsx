@@ -6,7 +6,7 @@ import { Input } from '../components/ui/Input';
 import { useAuthStore } from '../stores/authStore';
 import { useUIStore } from '../stores/uiStore';
 import { ArrowLeft, CreditCard, Bank, CheckCircle, X } from '@phosphor-icons/react';
-import { getAgreement } from '../api/escrow';
+import { getAgreement, verifyPayment as verifyPaymentAPI } from '../api/escrow';
 import { simulateIncomingTransfer } from '../api/payments';
 import { formatCurrency } from '../utils/format';
 import { debugWallet } from '../api/auth';
@@ -118,14 +118,28 @@ export default function FundEscrow() {
     if (!isAuto) setChecking(true);
     try {
       if (agreementId) {
+        // On manual check: call POST verify-payment first — this triggers the backend
+        // to deduct from wallet_balance and flip the agreement to ACTIVE if funds are available.
+        // On auto-polling: just GET the agreement to avoid spamming the POST endpoint.
+        if (!isAuto) {
+          try {
+            await verifyPaymentAPI(agreementId);
+          } catch (verifyErr) {
+            // 402 means no payment found yet — fall through to the GET check below
+            // Any other error: still fall through (don't block the status check)
+            if (verifyErr?.response?.status !== 402) {
+              console.warn('verify-payment returned unexpected error:', verifyErr?.response?.data);
+            }
+          }
+        }
         const latestAgreement = await getAgreement(agreementId);
         setAgreement(latestAgreement);
         if (FUNDED_STATUSES.has(normalizeStatus(latestAgreement?.status))) {
           setCheckSuccess(true);
           setVerificationPopupOpen(true);
-          addToast('Payment detected! Escrow is now active.', 'success');
+          addToast('Payment verified! Escrow is now active.', 'success');
         } else if (!isAuto) {
-          addToast('No payment detected yet for this agreement. Please ensure the transfer is complete.', 'info');
+          addToast('No payment found yet. If you just transferred, wait 1–2 minutes and try again.', 'info');
         }
       } else {
         const profile = await fetchProfile();

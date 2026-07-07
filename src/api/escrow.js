@@ -10,3 +10,4 @@ export const submitProof = (id, formData) =>
   });
 export const releaseFunds = (id) => client.post(`/escrow/${id}/release-funds/`);
 export const requestRefund = (id) => client.post(`/escrow/${id}/request-refund/`);
+export const verifyPayment = (id) => client.post(`/escrow/${id}/verify-payment/`);
