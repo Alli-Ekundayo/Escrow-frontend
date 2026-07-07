@@ -201,6 +201,13 @@ export default function FundEscrow() {
   };
 
   const backPath = agreementId ? `/agreements/${agreementId}` : '/dashboard';
+  const transferDetails = [
+    ['Bank', user?.nomba_bank_code === 'NMB' ? 'Nombank MFB' : 'MFB'],
+    ['Account', user?.nomba_account_number || 'Provisioning…'],
+    ['Name', user ? `${user.first_name} ${user.last_name}` : 'Es-crow User'],
+    ...(agreementId ? [['Reference', `tf-${agreementId}`]] : []),
+    ...(agreement?.amount != null ? [['Expected', formatCurrency(agreement.amount, agreement.currency)]] : []),
+  ];
 
   return (
     <>
@@ -319,6 +326,77 @@ export default function FundEscrow() {
               </p>
             </div>
 
+            {!checkSuccess && (
+              <div style={{
+                width: '100%',
+                backgroundColor: 'var(--bg-surface-alt)',
+                border: '1.5px solid var(--border-default)',
+                borderRadius: 12,
+                padding: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+                textAlign: 'left',
+                fontFamily: "'Geist Mono', ui-monospace, monospace",
+                fontSize: 13,
+              }}>
+                {transferDetails.map(([label, value]) => (
+                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>{label}</span>
+                    <span
+                      style={{
+                        fontWeight: 700,
+                        color: 'var(--text-primary)',
+                        letterSpacing: label === 'Account' ? '0.05em' : 'normal',
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
+                      {value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!checkSuccess && !user?.nomba_account_number && (
+              <div style={{
+                width: '100%',
+                padding: 12,
+                borderRadius: 8,
+                backgroundColor: 'rgba(235, 94, 40, 0.05)',
+                border: '1px solid rgba(235, 94, 40, 0.15)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+                textAlign: 'left',
+              }}>
+                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                  Virtual wallet provisioning takes a moment. If it is stuck at 'Provisioning...', you can manually retry.
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleRetryProvisioning}
+                  loading={retryingProvision}
+                  style={{ width: 'fit-content' }}
+                >
+                  Retry Provisioning
+                </Button>
+                {provisioningError && (
+                  <pre style={{
+                    margin: 0, padding: 8, borderRadius: 4,
+                    backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                    border: '1px solid rgba(239, 68, 68, 0.15)',
+                    color: '#dc2626', fontSize: 11,
+                    whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+                    fontFamily: "'Geist Mono', monospace",
+                  }}>
+                    {provisioningError}
+                  </pre>
+                )}
+              </div>
+            )}
+
             {checkSuccess ? (
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 8,
@@ -424,13 +502,7 @@ export default function FundEscrow() {
             fontFamily: "'Geist Mono', ui-monospace, monospace",
             fontSize: 13,
           }}>
-            {[
-              ['Bank', user?.nomba_bank_code === 'NMB' ? 'Nombank MFB' : 'MFB'],
-              ['Account', user?.nomba_account_number || 'Provisioning…'],
-              ['Name', user ? `${user.first_name} ${user.last_name}` : 'Es-crow User'],
-              ...(agreementId ? [['Reference', `tf-${agreementId}`]] : []),
-              ...(agreement?.amount != null ? [['Expected', formatCurrency(agreement.amount, agreement.currency)]] : []),
-            ].map(([label, value]) => (
+            {transferDetails.map(([label, value]) => (
               <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>{label}</span>
                 <span style={{
