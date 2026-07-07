@@ -5,7 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuthStore } from '../stores/authStore';
 import { useUIStore } from '../stores/uiStore';
-import { ArrowLeft, CreditCard, Bank, CheckCircle } from '@phosphor-icons/react';
+import { ArrowLeft, CreditCard, Bank, CheckCircle, X } from '@phosphor-icons/react';
 import { getAgreement } from '../api/escrow';
 import { simulateIncomingTransfer } from '../api/payments';
 import { formatCurrency } from '../utils/format';
@@ -30,6 +30,7 @@ export default function FundEscrow() {
   const [agreementError, setAgreementError] = useState('');
   const [checking, setChecking] = useState(false);
   const [checkSuccess, setCheckSuccess] = useState(false);
+  const [verificationPopupOpen, setVerificationPopupOpen] = useState(true);
   const [initialBalance, setInitialBalance] = useState(null);
   const parsedDepositAmount = Number(depositAmount);
   const hasValidDepositAmount = Number.isFinite(parsedDepositAmount) && parsedDepositAmount > 0;
@@ -121,6 +122,7 @@ export default function FundEscrow() {
         setAgreement(latestAgreement);
         if (FUNDED_STATUSES.has(normalizeStatus(latestAgreement?.status))) {
           setCheckSuccess(true);
+          setVerificationPopupOpen(true);
           addToast('Payment detected! Escrow is now active.', 'success');
         } else if (!isAuto) {
           addToast('No payment detected yet for this agreement. Please ensure the transfer is complete.', 'info');
@@ -130,6 +132,7 @@ export default function FundEscrow() {
         const currentBalance = profile.wallet_balance || 0;
         if (initialBalance !== null && currentBalance > initialBalance) {
           setCheckSuccess(true);
+          setVerificationPopupOpen(true);
           addToast(`Payment detected! Wallet credited with NGN ${(currentBalance - initialBalance).toLocaleString()}.`, 'success');
         } else if (!isAuto) {
           addToast('No new deposit detected yet. Please ensure the transfer is complete.', 'info');
@@ -155,6 +158,7 @@ export default function FundEscrow() {
   useEffect(() => {
     if (!checkSuccess) return () => {};
     const timeout = setTimeout(() => {
+      setVerificationPopupOpen(false);
       navigate(agreementId ? `/agreements/${agreementId}` : '/dashboard');
     }, 2000);
     return () => clearTimeout(timeout);
@@ -200,8 +204,7 @@ export default function FundEscrow() {
 
   return (
     <>
-      {/* Payment Verified Modal Popup */}
-      {checkSuccess && (
+      {verificationPopupOpen && (
         <div
           style={{
             position: 'fixed', inset: 0, zIndex: 9999,
@@ -221,8 +224,8 @@ export default function FundEscrow() {
               from { opacity: 0; transform: scale(0.85) translateY(20px); }
               to { opacity: 1; transform: scale(1) translateY(0); }
             }
-            @keyframes spinnerRing {
-              to { stroke-dashoffset: 0; }
+            @keyframes spin {
+              to { transform: rotate(360deg); }
             }
             @keyframes pulse-ring {
               0% { transform: scale(1); opacity: 0.8; }
@@ -245,72 +248,115 @@ export default function FundEscrow() {
               textAlign: 'center',
               fontFamily: "'Inter', sans-serif",
               animation: 'scaleInModal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              position: 'relative',
             }}
           >
-            {/* Animated success icon */}
+            {!checkSuccess && (
+              <button
+                type="button"
+                aria-label="Close payment verification popup"
+                onClick={() => setVerificationPopupOpen(false)}
+                style={{
+                  position: 'absolute',
+                  top: 12,
+                  right: 12,
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  padding: 4,
+                }}
+              >
+                <X style={{ width: 18, height: 18 }} />
+              </button>
+            )}
+
             <div style={{ position: 'relative', width: 96, height: 96 }}>
-              <div style={{
-                position: 'absolute', inset: 0, borderRadius: '50%',
-                backgroundColor: 'rgba(26, 92, 42, 0.12)',
-                animation: 'pulse-ring 1.5s ease-out infinite',
-              }} />
+              {checkSuccess && (
+                <div style={{
+                  position: 'absolute', inset: 0, borderRadius: '50%',
+                  backgroundColor: 'rgba(26, 92, 42, 0.12)',
+                  animation: 'pulse-ring 1.5s ease-out infinite',
+                }} />
+              )}
               <div style={{
                 position: 'relative', zIndex: 1,
                 width: 96, height: 96, borderRadius: '50%',
-                background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)',
+                background: checkSuccess
+                  ? 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)'
+                  : 'linear-gradient(135deg, #f8f4e9 0%, #f3ead7 100%)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 8px 24px rgba(26, 92, 42, 0.2)',
+                boxShadow: checkSuccess
+                  ? '0 8px 24px rgba(26, 92, 42, 0.2)'
+                  : '0 8px 24px rgba(86, 64, 23, 0.14)',
               }}>
-                <CheckCircle style={{ width: 52, height: 52, color: '#1a5c2a' }} weight="fill" />
+                {checkSuccess ? (
+                  <CheckCircle style={{ width: 52, height: 52, color: '#1a5c2a' }} weight="fill" />
+                ) : (
+                  <svg width="42" height="42" viewBox="0 0 24 24" style={{ animation: 'spin 1s linear infinite', color: '#7f5d29' }}>
+                    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="24" strokeDashoffset="8" strokeLinecap="round" />
+                  </svg>
+                )}
               </div>
             </div>
 
-            {/* Text */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <h2 style={{
                 fontSize: 26, fontWeight: 900, letterSpacing: '-0.03em',
                 color: 'var(--text-primary)', margin: 0,
               }}>
-                Payment Verified!
+                {checkSuccess ? 'Payment Verified!' : 'Verifying Payment'}
               </h2>
               <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
-                {agreementId
-                  ? 'Your transfer has been processed and the escrow agreement is now funded and active.'
-                  : 'Your transfer has been verified and your wallet balance has been updated.'}
+                {checkSuccess
+                  ? (agreementId
+                    ? 'Your transfer has been processed and the escrow agreement is now funded and active.'
+                    : 'Your transfer has been verified and your wallet balance has been updated.')
+                  : (agreementLoading
+                    ? 'Loading agreement status and monitoring your transfer.'
+                    : 'We are monitoring your account for the transfer. You can also run a manual check now.')}
               </p>
             </div>
 
-            {/* Redirecting pill */}
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              backgroundColor: 'var(--bg-surface-alt)',
-              border: '1px solid var(--border-default)',
-              borderRadius: 999, padding: '8px 16px',
-              fontSize: 12, color: 'var(--text-tertiary)',
-            }}>
-              <svg width="12" height="12" viewBox="0 0 12 12" style={{ animation: 'spin 1s linear infinite' }}>
-                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-                <circle cx="6" cy="6" r="5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="16" strokeDashoffset="8" strokeLinecap="round" />
-              </svg>
-              Redirecting you automatically…
-            </div>
+            {checkSuccess ? (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                backgroundColor: 'var(--bg-surface-alt)',
+                border: '1px solid var(--border-default)',
+                borderRadius: 999, padding: '8px 16px',
+                fontSize: 12, color: 'var(--text-tertiary)',
+              }}>
+                <svg width="12" height="12" viewBox="0 0 12 12" style={{ animation: 'spin 1s linear infinite' }}>
+                  <circle cx="6" cy="6" r="5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="16" strokeDashoffset="8" strokeLinecap="round" />
+                </svg>
+                Redirecting you automatically…
+              </div>
+            ) : (
+              <Button
+                onClick={() => verifyPayment(false)}
+                loading={checking}
+                variant="secondary"
+                size="sm"
+                style={{ width: '100%' }}
+              >
+                Verify Payment Now
+              </Button>
+            )}
           </div>
         </div>
       )}
 
-      {/* Main page content — always rendered beneath modal */}
       <div
         style={{
           maxWidth: 600, margin: '0 auto',
           display: 'flex', flexDirection: 'column', gap: 24,
           fontFamily: "'Inter', system-ui, sans-serif",
-          filter: checkSuccess ? 'blur(2px)' : 'none',
+          filter: verificationPopupOpen ? 'blur(2px)' : 'none',
           transition: 'filter 0.3s ease',
-          pointerEvents: checkSuccess ? 'none' : 'auto',
+          pointerEvents: verificationPopupOpen ? 'none' : 'auto',
         }}
       >
-        {/* ─────────────────── rest of main page below ─────────────────── */}
-      {/* Back */}
       <button
         onClick={() => navigate(backPath)}
         style={{
@@ -339,6 +385,16 @@ export default function FundEscrow() {
             ? 'Complete a bank transfer to activate this escrow.'
             : 'Deposit into your Nomba virtual account to fund escrow.'}
         </p>
+        {!checkSuccess && !verificationPopupOpen && (
+          <Button
+            onClick={() => setVerificationPopupOpen(true)}
+            variant="outline"
+            size="sm"
+            style={{ marginTop: 12 }}
+          >
+            Open Verification Screen
+          </Button>
+        )}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -425,49 +481,6 @@ export default function FundEscrow() {
               {agreementError}
             </p>
           )}
-        </Card>
-
-        {/* Payment Verification status card */}
-        <Card style={{
-          border: checkSuccess ? '1.5px solid #E2F6D5' : '1.5px solid var(--border-default)',
-          backgroundColor: checkSuccess ? 'rgba(226,246,213,0.1)' : 'var(--bg-surface-alt)',
-        }}>
-          <CardHeader style={{ paddingBottom: 8 }}>
-            <CardTitle style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 700 }}>
-              {checkSuccess ? (
-                <CheckCircle style={{ width: 18, height: 18, color: '#1a5c2a' }} weight="fill" />
-              ) : (
-                <div style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--color-accent-copper)',
-                }} />
-              )}
-              Payment Verification
-            </CardTitle>
-          </CardHeader>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
-              {checkSuccess 
-                ? 'Payment detected and verified successfully! Redirecting...' 
-                : agreementLoading
-                  ? 'Loading agreement status...'
-                  : 'Monitoring your account for the transfer. You can click verify to check manually at any time.'
-              }
-            </p>
-            {!checkSuccess && (
-              <Button 
-                onClick={() => verifyPayment(false)} 
-                loading={checking} 
-                variant="secondary"
-                size="sm"
-                style={{ width: 'fit-content' }}
-              >
-                Verify Payment Now
-              </Button>
-            )}
-          </div>
         </Card>
 
         {/* Sandbox simulator */}
